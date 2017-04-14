@@ -53,11 +53,21 @@ namespace QtSharp
             }
 
             // HACK: work around https://github.com/mono/CppSharp/issues/594
-            lib.FindCompleteClass("QGraphicsItem").FindEnum("Extension").Access = AccessSpecifier.Public;
-            lib.FindCompleteClass("QAbstractSlider").FindEnum("SliderChange").Access = AccessSpecifier.Public;
-            lib.FindCompleteClass("QAbstractItemView").FindEnum("CursorAction").Access = AccessSpecifier.Public;
-            lib.FindCompleteClass("QAbstractItemView").FindEnum("State").Access = AccessSpecifier.Public;
-            lib.FindCompleteClass("QAbstractItemView").FindEnum("DropIndicatorPosition").Access = AccessSpecifier.Public;
+
+            if (lib.FindCompleteClass("QGraphicsItem") != null)
+            {
+                lib.FindCompleteClass("QGraphicsItem").FindEnum("Extension").Access = AccessSpecifier.Public;
+            }
+            if (lib.FindCompleteClass("QAbstractSlider") != null)
+            {
+                lib.FindCompleteClass("QAbstractSlider").FindEnum("SliderChange").Access = AccessSpecifier.Public;
+            }
+            if (lib.FindCompleteClass("QAbstractItemView") != null)
+            {
+                lib.FindCompleteClass("QAbstractItemView").FindEnum("CursorAction").Access = AccessSpecifier.Public;
+                lib.FindCompleteClass("QAbstractItemView").FindEnum("State").Access = AccessSpecifier.Public;
+                lib.FindCompleteClass("QAbstractItemView").FindEnum("DropIndicatorPosition").Access = AccessSpecifier.Public;
+            }
             var classesWithTypeEnums = new[]
                                        {
                                            "QGraphicsEllipseItem", "QGraphicsItemGroup", "QGraphicsLineItem",
@@ -66,6 +76,7 @@ namespace QtSharp
                                            "QGraphicsTextItem", "QGraphicsWidget", "QGraphicsSvgItem"
                                        };
             foreach (var enumeration in from @class in classesWithTypeEnums
+                                        where lib.FindCompleteClass(@class) != null
                                         from @enum in lib.FindCompleteClass(@class).Enums
                                         where string.IsNullOrEmpty(@enum.Name)
                                         select @enum)
@@ -87,18 +98,29 @@ namespace QtSharp
             foreach (var name in new[] { "QGraphicsScene", "QGraphicsView" })
             {
                 var @class = lib.FindCompleteClass(name);
-                var drawItems = @class.Methods.FirstOrDefault(m => m.OriginalName == "drawItems");
-                if (drawItems != null)
+                if (@class != null)
                 {
-                    drawItems.ExplicitlyIgnore();
+                    var drawItems = @class.Methods.FirstOrDefault(m => m.OriginalName == "drawItems");
+                    if (drawItems != null)
+                    {
+                        drawItems.ExplicitlyIgnore();
+                    }
                 }
             }
-            lib.FindCompleteClass("QAbstractPlanarVideoBuffer").ExplicitlyIgnore();
-            var qAbstractVideoBuffer = lib.FindCompleteClass("QAbstractVideoBuffer");
-            var mapPlanes = qAbstractVideoBuffer.Methods.FirstOrDefault(m => m.OriginalName == "mapPlanes");
-            if (mapPlanes != null)
+
+            if (lib.FindCompleteClass("QAbstractPlanarVideoBuffer") != null)
             {
-                mapPlanes.ExplicitlyIgnore();
+                lib.FindCompleteClass("QAbstractPlanarVideoBuffer").ExplicitlyIgnore();
+            }
+
+            var qAbstractVideoBuffer = lib.FindCompleteClass("QAbstractVideoBuffer");
+            if (qAbstractVideoBuffer != null)
+            {
+                var mapPlanes = qAbstractVideoBuffer.Methods.FirstOrDefault(m => m.OriginalName == "mapPlanes");
+                if (mapPlanes != null)
+                {
+                    mapPlanes.ExplicitlyIgnore();
+                }
             }
         }
 
@@ -318,6 +340,22 @@ namespace QtSharp
                                 select line).ToList();
                 File.WriteAllLines(cpp, linkable);
             }
+
+            if (e.Module.LibraryName == "QtGui.Sharp")
+            {
+                var cpp = Path.ChangeExtension(pro, "cpp");
+                var unlinkable = new[]
+                                 {
+                                     "_CoreBackend",
+                                     "_DeprecatedBackend",
+                                 };
+
+                var linkable = (from line in File.ReadLines(cpp)
+                                where unlinkable.All(ul => !line.Contains(ul))
+                                select line).ToList();
+                File.WriteAllLines(cpp, linkable);
+            }
+
             int error;
             string errorMessage;
             ProcessHelper.Run(this.qtInfo.QMake, $"\"{path}\"", out error, out errorMessage);

@@ -253,6 +253,9 @@ namespace QtSharp.CLI
                     modules.Remove(module + "d" + Path.GetExtension(modules[i]));                    
                 }
             }
+
+            //modules = new List<string> { "Qt5Core.dll", "Qt5Gui.dll" };
+
             return modules;
         }
     }
