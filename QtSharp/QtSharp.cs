@@ -212,7 +212,7 @@ namespace QtSharp
                     var moduleInclude = Path.Combine(qtInfo.Headers, qtModule);
                     if (Directory.Exists(moduleInclude))
                         module.IncludeDirs.Add(moduleInclude);
-                    if (moduleName == "Designer")
+                    if (moduleName == "Designer" && Directory.Exists(Path.Combine(qtInfo.Headers, "QtUiPlugin")))
                     {
                         module.IncludeDirs.Add(Path.Combine(qtInfo.Headers, "QtUiPlugin"));
                     }

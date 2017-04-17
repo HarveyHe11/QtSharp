@@ -49,6 +49,12 @@ namespace QtSharp.DocGeneration
             var xmlReaderSettings = new XmlReaderSettings();
             xmlReaderSettings.DtdProcessing = DtdProcessing.Parse;
             var file = module.ToLowerInvariant();
+
+            if (!File.Exists(Path.Combine(docsPath, file, $"{file}.index")))
+            {
+                return;
+            }
+
             using (var stream = new FileStream(Path.Combine(docsPath, file, $"{file}.index"), FileMode.Open))
             {
                 using (var xmlReader = XmlReader.Create(stream, xmlReaderSettings))
